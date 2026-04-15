@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+#
+# ░░░░░█▀▀░█░█░█▀▀░▀█▀░█▀█░█▄█░░░█▀▀░█░█░█▀▀░█░░░█░░░░░░ #
+# ░░░░░█░░░█░█░▀▀█░░█░░█░█░█░█░░░▀▀█░█▀█░█▀▀░█░░░█░░░░░░ #
+# ░░░░░▀▀▀░▀▀▀░▀▀▀░░▀░░▀▀▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░▀▀▀░▀▀▀░░░░ #
+#
+# Small functions to set up GNOME Shell quickly.
+
+schemas=(
+  "org.gnome.desktop.wm.keybindings"
+  "org.gnome.shell.keybindings"
+  "org.gnome.mutter.keybindings"
+  "org.gnome.settings-daemon.plugins.media-keys"
+  "all"
+)
+
+print_schemas() {
+  local schemas=($(gsettings list-schemas))
+
+  for schema in "${schemas[@]}"; do
+    local keys=($(gsettings list-keys "${schema}"))
+    if [[ "${#keys[@]}" -gt 0 ]]; then
+      printf "%s\n" "${schema}"
+    fi
+  done
+}
+
+show_schema() {
+  if [[ $# -eq 0 ]]; then return; fi
+
+  local schema=${1}
+  local keys=($(gsettings list-keys "${schema}"))
+  printf "== Schema: \x1b[34m%s\x1b[0m (%d keys)\n" "${schema}" "${#keys[@]}"
+
+  for key in ${keys[@]}; do
+    local kind="$(gsettings range ${schema} ${key})"
+    local keybinding="$(gsettings get ${schema} ${key})"
+    printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
+  done
+}
+
+get_keybindings() {
+  local show_all=false
+
+  printf "Select schema(s):\n"
+  select schema in "${schemas[@]}"; do
+    case ${schema} in
+      all) show_all=true;;
+      *) show_schema ${schema};;
+    esac
+    break
+  done
+
+  if [[ ${show_all} == true ]]; then
+    for schema in "${schemas[@]}"; do
+      if [[ "${schema}" != "all" ]]; then
+        show_schema ${schema}
+      fi
+    done
+  fi
+}
+
+delete_keybindings() {
+  local key_count=0
+  local modified=0
+
+  for schema in "${schemas[@]}"; do
+    printf "==> \x1b[34m%s\x1b[0m\n" ${schema}
+
+    local keys=($(gsettings list-keys "${schema}"))
+
+    for key in "${keys[@]}"; do
+      ((key_count++))
+      local kind="$(gsettings range ${schema} ${key})"
+      if [[ "${kind}" == *array* || "${kind}" == *as* ]]; then
+        ((modified++))
+        gsettings set "${schema}" "${key}" "[]"
+        printf "Key \x1b[34m%s\x1b[0m disabled.\n"
+      else
+        printf "\x1b[31mnoop\n\x1b[0m"
+      fi
+    done
+  done
+
+  printf "Done! %d of %d keybindings disabled.\n" "${modified}" "${key_count}"
+}
+
+set_sane_defaults() {
+  # Swap escape and capslock.
+  # I'm commenting this option out for now since I'm using a 60% keyboard (no 'tilde'key).
+  # Instead I'm using input-remapper to get this functionality plus the tilde.
+  # gsettings set org.gnome.desktop.input-sources "xkb-options" "['caps:swapescape']"
+
+  # I use a tiling extension (Forge/PaperWM), so don't auto maximise:
+  gsettings set org.gnome.mutter auto-maximize false
+
+  # Media keys.
+  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-up" "['<Super>BracketRight']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-down" "['<Super>BracketLeft']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-mute" "['<Super>BackSlash']"
+
+  # Custom key-bindings.
+  local custom0="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+  local custom1="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/"
+  local custom2="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/"
+  local custom3="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys \
+            "custom-keybindings" "['${custom0}', '${custom1}', '${custom2}', '${custom3}']"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} name "Open Kitty"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} command "kitty --detach"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} binding "<Super>Return"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} name "Open Chromium"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} command "chromium"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} binding "<Super>b"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} name "Open Web"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} command "epiphany --new-window"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} binding "<Super>w"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} name "Power off"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} command "gnome-session-quit --power-off"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} binding "<Control><Super>e"
+}
+
+set_keybindings() {
+  # Workspaces.
+  local schema='org.gnome.desktop.wm.keybindings'
+  local go_cmd='switch-to-workspace'
+  local mv_cmd='move-to-workspace'
+
+  # Using four workspaces.
+  for i in {1..4}; do
+    gsettings set ${schema} ${go_cmd}-${i} "['<Super>${i}']"
+    gsettings set ${schema} ${mv_cmd}-${i} "['<Super><Control>${i}']"
+  done
+
+  # Disable ibus emoji/unicode to avoid conflicts.
+  # NOTE: set ibus emoji/unicode to a different key (it may be useful!).
+  gsettings set org.freedesktop.ibus.panel.emoji unicode-hotkey "['']"
+  gsettings set org.freedesktop.ibus.panel.emoji hotkey "['']"
+
+  # Go to left/right workspace.
+  gsettings set ${schema} ${go_cmd}-left "['<Super>Comma']"
+  gsettings set ${schema} ${go_cmd}-right "['<Super>Period']"
+
+  gsettings set ${schema} close "['<Super>q']"
+  gsettings set ${schema} switch-applications "['<Alt>Tab']"
+  gsettings set ${schema} switch-windows "['<Super>Tab']"
+  gsettings set ${schema} switch-input-source "['<Super>Space']"
+  gsettings set ${schema} toggle-maximized "['<Super>m']"
+  gsettings set ${schema} toggle-fullscreen "['<Super>f']"
+}
