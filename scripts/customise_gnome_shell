@@ -125,31 +125,163 @@ set_sane_defaults() {
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} binding "<Control><Super>e"
 }
 
-set_keybindings() {
-  # Workspaces.
-  local schema='org.gnome.desktop.wm.keybindings'
-  local go_cmd='switch-to-workspace'
-  local mv_cmd='move-to-workspace'
+_set_wm_keybindings() {
 
-  # Using four workspaces.
-  for i in {1..4}; do
-    gsettings set ${schema} ${go_cmd}-${i} "['<Super>${i}']"
-    gsettings set ${schema} ${mv_cmd}-${i} "['<Super><Control>${i}']"
+  local schema='org.gnome.desktop.wm.keybindings'
+
+  # Workspaces, windows and stuff.
+  declare -A wm_keybindings
+
+  ### Uncomment and set as you like.
+  wm_keybindings=(
+    # [activate-window-menu]="[]"
+    # [always-on-top]="[]"
+    # [begin-move]="[]"
+    # [begin-resize]="[]"
+    [close]="['<Super>q']"
+    # [cycle-group]="[]"
+    # [cycle-group-backward]="[]"
+    # [cycle-panels]="[]"
+    # [cycle-panels-backward]="[]"
+    # [cycle-windows]="[]"
+    # [cycle-windows-backward]="[]"
+    # [lower]="[]"
+    # [maximize]="[]"
+    # [maximize-horizontally]="[]"
+    # [maximize-vertically]="[]"
+    # [minimize]="[]"
+    # [move-to-center]="[]"
+    # [move-to-corner-ne]="[]"
+    # [move-to-corner-nw]="[]"
+    # [move-to-corner-se]="[]"
+    # [move-to-corner-sw]="[]"
+    # [move-to-monitor-down]="[]"
+    # [move-to-monitor-left]="[]"
+    # [move-to-monitor-right]="[]"
+    # [move-to-monitor-up]="[]"
+    # [move-to-side-e]="[]"
+    # [move-to-side-n]="[]"
+    # [move-to-side-s]="[]"
+    # [move-to-side-w]="[]"
+    [move-to-workspace-1]="['<Super><Control>1']"
+    # [move-to-workspace-10]="[]"
+    # [move-to-workspace-11]="[]"
+    # [move-to-workspace-12]="[]"
+    [move-to-workspace-2]="['<Super><Control>2']"
+    [move-to-workspace-3]="['<Super><Control>3']"
+    [move-to-workspace-4]="['<Super><Control>4']"
+    # [move-to-workspace-5]="[]"
+    # [move-to-workspace-6]="[]"
+    # [move-to-workspace-7]="[]"
+    # [move-to-workspace-8]="[]"
+    # [move-to-workspace-9]="[]"
+    # [move-to-workspace-down]="[]"
+    # [move-to-workspace-last]="[]"
+    # [move-to-workspace-left]="[]"
+    # [move-to-workspace-right]="[]"
+    # [move-to-workspace-up]="[]"
+    # [panel-main-menu]="[]"
+    # [panel-run-dialog]="[]"
+    # [raise]="[]"
+    # [raise-or-lower]="[]"
+    # [set-spew-mark]="[]"
+    # [show-desktop]="[]"
+    [switch-applications]="['<Alt>Tab']"
+    # [switch-applications-backward]="[]"
+    # [switch-group]="[]"
+    # [switch-group-backward]="[]"
+    [switch-input-source]="['<Super>Space']"
+    # [switch-input-source-backward]="[]"
+    # [switch-panels]="[]"
+    # [switch-panels-backward]="[]"
+    [switch-to-workspace-1]="['<Super>1']"
+    # [switch-to-workspace-10]="[]"
+    # [switch-to-workspace-11]="[]"
+    # [switch-to-workspace-12]="[]"
+    [switch-to-workspace-2]="['<Super>2']"
+    [switch-to-workspace-3]="['<Super>3']"
+    [switch-to-workspace-4]="['<Super>4']"
+    # [switch-to-workspace-5]="[]"
+    # [switch-to-workspace-6]="[]"
+    # [switch-to-workspace-7]="[]"
+    # [switch-to-workspace-8]="[]"
+    # [switch-to-workspace-9]="[]"
+    # [switch-to-workspace-down]="[]"
+    # [switch-to-workspace-last]="[]"
+    [switch-to-workspace-left]="['<Super>Comma']"
+    [switch-to-workspace-right]="['<Super>Period']"
+    # [switch-to-workspace-up]="[]"
+    [switch-windows]="['<Super>Tab']"
+    # [switch-windows-backward]="[]"
+    # [toggle-above]="[]"
+    [toggle-fullscreen]="['<Super>f']"
+    [toggle-maximized]="['<Super>m']"
+    # [toggle-on-all-workspaces]="[]"
+    # [unmaximize]="[]"
+  )
+
+  for key in ${!wm_keybindings[@]}; do
+    gsettings set ${schema} ${key} "${wm_keybindings[${key}]}"
   done
+}
+
+_set_shell_keybindings() {
+
+  local schema='org.gnome.shell.keybindings'
+
+  declare -A shell_keybindings
+
+  ### Uncomment and set as you wish.
+  shell_keybindings=(
+    # [focus-active-notification]="[]"
+    # [open-new-window-application-1]="[]"
+    # [open-new-window-application-2]="[]"
+    # [open-new-window-application-3]="[]"
+    # [open-new-window-application-4]="[]"
+    # [open-new-window-application-5]="[]"
+    # [open-new-window-application-6]="[]"
+    # [open-new-window-application-7]="[]"
+    # [open-new-window-application-8]="[]"
+    # [open-new-window-application-9]="[]"
+    # [screenshot]="[]"
+    # [screenshot-window]="[]"
+    [shift-overview-down]="['<Super><Ctrl>n']"
+    [shift-overview-up]="['<Super><Ctrl>p']"
+    [show-screen-recording-ui]="['<Super><Ctrl>r']"
+    [show-screenshot-ui]="['<Super><Ctrl>s']"
+    # [switch-to-application-1]="[]"
+    # [switch-to-application-2]="[]"
+    # [switch-to-application-3]="[]"
+    # [switch-to-application-4]="[]"
+    # [switch-to-application-5]="[]"
+    # [switch-to-application-6]="[]"
+    # [switch-to-application-7]="[]"
+    # [switch-to-application-8]="[]"
+    # [switch-to-application-9]="[]"
+    [toggle-application-view]="['<Super>a']"
+    # [toggle-message-tray]="[]"
+    [toggle-overview]="['<Super>o']"
+    # [toggle-quick-settings]="[]"
+  )
+
+  for key in ${!shell_keybindings[@]}; do
+    gsettings set ${schema} ${key} "${shell_keybindings[${key}]}"
+  done
+}
+
+_disable_ibus_emoji() {
 
   # Disable ibus emoji/unicode to avoid conflicts.
   # NOTE: set ibus emoji/unicode to a different key (it may be useful!).
   gsettings set org.freedesktop.ibus.panel.emoji unicode-hotkey "['']"
   gsettings set org.freedesktop.ibus.panel.emoji hotkey "['']"
+}
 
-  # Go to left/right workspace.
-  gsettings set ${schema} ${go_cmd}-left "['<Super>Comma']"
-  gsettings set ${schema} ${go_cmd}-right "['<Super>Period']"
+set_keybindings() {
 
-  gsettings set ${schema} close "['<Super>q']"
-  gsettings set ${schema} switch-applications "['<Alt>Tab']"
-  gsettings set ${schema} switch-windows "['<Super>Tab']"
-  gsettings set ${schema} switch-input-source "['<Super>Space']"
-  gsettings set ${schema} toggle-maximized "['<Super>m']"
-  gsettings set ${schema} toggle-fullscreen "['<Super>f']"
+  _disable_ibus_emoji
+
+  _set_wm_keybindings
+
+  _set_shell_keybindings
 }
