@@ -85,6 +85,17 @@ delete_keybindings() {
   printf "Done! %d of %d keybindings disabled.\n" "${modified}" "${key_count}"
 }
 
+_set_custom_key() {
+  local schema=${1}
+  local name=${2}
+  local command=${3}
+  local binding=${4}
+
+  gsettings set ${schema} name "${name}"
+  gsettings set ${schema} command "${command}"
+  gsettings set ${schema} binding "${binding}"
+}
+
 set_sane_defaults() {
   # Swap escape and capslock.
   # I'm commenting this option out for now since I'm using a 60% keyboard (no 'tilde'key).
@@ -95,34 +106,24 @@ set_sane_defaults() {
   gsettings set org.gnome.mutter auto-maximize false
 
   # Media keys.
-  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-up" "['<Super>BracketRight']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-down" "['<Super>BracketLeft']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys "volume-mute" "['<Super>BackSlash']"
+  local media_keys="org.gnome.settings-daemon.plugins.media-keys"
+
+  gsettings set ${media_keys} "volume-up" "['<Super>BracketRight']"
+  gsettings set ${media_keys} "volume-down" "['<Super>BracketLeft']"
+  gsettings set ${media_keys} "volume-mute" "['<Super>BackSlash']"
 
   # Custom key-bindings.
-  local custom0="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
-  local custom1="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/"
-  local custom2="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/"
-  local custom3="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys \
-            "custom-keybindings" "['${custom0}', '${custom1}', '${custom2}', '${custom3}']"
+  local path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} name "Open Kitty"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} command "kitty --detach"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom0} binding "<Super>Return"
+  gsettings set ${media_keys} "custom-keybindings" "['${path}0/', '${path}1/', '${path}2/', '${path}3/']"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} name "Open Chromium"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} command "chromium"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom1} binding "<Super>b"
+  local schema="${media_keys}.custom-keybinding:"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} name "Open Web"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} command "epiphany --new-window"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom2} binding "<Super>w"
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} name "Power off"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} command "gnome-session-quit --power-off"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${custom3} binding "<Control><Super>e"
+  _set_custom_key "${schema}${path}0/" "Kitty" "kitty --detach" "<Super>Return"
+  _set_custom_key "${schema}${path}1/" "Firefox" "firefox" "<Super>w"
+  _set_custom_key "${schema}${path}2/" "Chromium" "chromium" "<Super>b"
+  _set_custom_key "${schema}${path}3/" "Power off" "gnome-session-quit --power-off" "<Control><Super>e"
 }
 
 _set_wm_keybindings() {
