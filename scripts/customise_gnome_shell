@@ -6,37 +6,17 @@
 #
 # Small functions to set up GNOME Shell quickly.
 
-schemas=(
-  "org.gnome.desktop.wm.keybindings"
-  "org.gnome.shell.keybindings"
-  "org.gnome.mutter.keybindings"
-  "org.gnome.settings-daemon.plugins.media-keys"
-  "all"
-)
+source ./helpers/gnome
 
-print_schemas() {
-  local schemas=($(gsettings list-schemas))
+set_keybindings() {
 
-  for schema in "${schemas[@]}"; do
-    local keys=($(gsettings list-keys "${schema}"))
-    if [[ "${#keys[@]}" -gt 0 ]]; then
-      printf "%s\n" "${schema}"
-    fi
-  done
-}
+  _set_sane_defaults
 
-show_schema() {
-  if [[ $# -eq 0 ]]; then return; fi
+  _disable_ibus_emoji
 
-  local schema=${1}
-  local keys=($(gsettings list-keys "${schema}"))
-  printf "== Schema: \x1b[34m%s\x1b[0m (%d keys)\n" "${schema}" "${#keys[@]}"
+  _set_wm_keybindings
 
-  for key in ${keys[@]}; do
-    local kind="$(gsettings range ${schema} ${key})"
-    local keybinding="$(gsettings get ${schema} ${key})"
-    printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
-  done
+  _set_shell_keybindings
 }
 
 get_keybindings() {
@@ -45,8 +25,8 @@ get_keybindings() {
   printf "Select schema(s):\n"
   select schema in "${schemas[@]}"; do
     case ${schema} in
-      all) show_all=true;;
-      *) show_schema ${schema};;
+    all) show_all=true ;;
+    *) _show_schema "${schema}" ;;
     esac
     break
   done
@@ -54,7 +34,7 @@ get_keybindings() {
   if [[ ${show_all} == true ]]; then
     for schema in "${schemas[@]}"; do
       if [[ "${schema}" != "all" ]]; then
-        show_schema ${schema}
+        _show_schema "${schema}"
       fi
     done
   fi
@@ -75,7 +55,7 @@ delete_keybindings() {
       if [[ "${kind}" == *array* || "${kind}" == *as* ]]; then
         ((modified++))
         gsettings set "${schema}" "${key}" "[]"
-        printf "Key \x1b[34m%s\x1b[0m disabled.\n"
+        printf "Key \x1b[34m%s\x1b[0m disabled.\n" "${key}"
       else
         printf "\x1b[31mnoop\n\x1b[0m"
       fi
@@ -83,206 +63,4 @@ delete_keybindings() {
   done
 
   printf "Done! %d of %d keybindings disabled.\n" "${modified}" "${key_count}"
-}
-
-_set_custom_key() {
-  local schema=${1}
-  local name=${2}
-  local command=${3}
-  local binding=${4}
-
-  gsettings set ${schema} name "${name}"
-  gsettings set ${schema} command "${command}"
-  gsettings set ${schema} binding "${binding}"
-}
-
-set_sane_defaults() {
-  # Swap escape and capslock.
-  # I'm commenting this option out for now since I'm using a 60% keyboard (no 'tilde'key).
-  # Instead I'm using input-remapper to get this functionality plus the tilde.
-  # gsettings set org.gnome.desktop.input-sources "xkb-options" "['caps:swapescape']"
-
-  # I use a tiling extension (Forge/PaperWM), so don't auto maximise:
-  gsettings set org.gnome.mutter auto-maximize false
-
-  # Media keys.
-  local media_keys="org.gnome.settings-daemon.plugins.media-keys"
-
-  gsettings set ${media_keys} "volume-up" "['<Super>BracketRight']"
-  gsettings set ${media_keys} "volume-down" "['<Super>BracketLeft']"
-  gsettings set ${media_keys} "volume-mute" "['<Super>BackSlash']"
-
-  # Custom key-bindings.
-
-  local path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom"
-
-  gsettings set ${media_keys} "custom-keybindings" "['${path}0/', '${path}1/', '${path}2/', '${path}3/']"
-
-  local schema="${media_keys}.custom-keybinding:"
-
-  _set_custom_key "${schema}${path}0/" "Kitty" "kitty --detach" "<Super>Return"
-  _set_custom_key "${schema}${path}1/" "Firefox" "firefox" "<Super>w"
-  _set_custom_key "${schema}${path}2/" "Chromium" "chromium" "<Super>b"
-  _set_custom_key "${schema}${path}3/" "Power off" "gnome-session-quit --power-off" "<Control><Super>e"
-}
-
-_set_wm_keybindings() {
-
-  local schema='org.gnome.desktop.wm.keybindings'
-
-  # Workspaces, windows and stuff.
-  declare -A wm_keybindings
-
-  ### Uncomment and set as you like.
-  wm_keybindings=(
-    # [activate-window-menu]="[]"
-    # [always-on-top]="[]"
-    # [begin-move]="[]"
-    # [begin-resize]="[]"
-    [close]="['<Super>q']"
-    # [cycle-group]="[]"
-    # [cycle-group-backward]="[]"
-    # [cycle-panels]="[]"
-    # [cycle-panels-backward]="[]"
-    # [cycle-windows]="[]"
-    # [cycle-windows-backward]="[]"
-    # [lower]="[]"
-    # [maximize]="[]"
-    # [maximize-horizontally]="[]"
-    # [maximize-vertically]="[]"
-    # [minimize]="[]"
-    # [move-to-center]="[]"
-    # [move-to-corner-ne]="[]"
-    # [move-to-corner-nw]="[]"
-    # [move-to-corner-se]="[]"
-    # [move-to-corner-sw]="[]"
-    # [move-to-monitor-down]="[]"
-    # [move-to-monitor-left]="[]"
-    # [move-to-monitor-right]="[]"
-    # [move-to-monitor-up]="[]"
-    # [move-to-side-e]="[]"
-    # [move-to-side-n]="[]"
-    # [move-to-side-s]="[]"
-    # [move-to-side-w]="[]"
-    [move-to-workspace-1]="['<Super><Control>1']"
-    # [move-to-workspace-10]="[]"
-    # [move-to-workspace-11]="[]"
-    # [move-to-workspace-12]="[]"
-    [move-to-workspace-2]="['<Super><Control>2']"
-    [move-to-workspace-3]="['<Super><Control>3']"
-    [move-to-workspace-4]="['<Super><Control>4']"
-    # [move-to-workspace-5]="[]"
-    # [move-to-workspace-6]="[]"
-    # [move-to-workspace-7]="[]"
-    # [move-to-workspace-8]="[]"
-    # [move-to-workspace-9]="[]"
-    # [move-to-workspace-down]="[]"
-    # [move-to-workspace-last]="[]"
-    # [move-to-workspace-left]="[]"
-    # [move-to-workspace-right]="[]"
-    # [move-to-workspace-up]="[]"
-    # [panel-main-menu]="[]"
-    # [panel-run-dialog]="[]"
-    # [raise]="[]"
-    # [raise-or-lower]="[]"
-    # [set-spew-mark]="[]"
-    # [show-desktop]="[]"
-    [switch-applications]="['<Alt>Tab']"
-    # [switch-applications-backward]="[]"
-    # [switch-group]="[]"
-    # [switch-group-backward]="[]"
-    [switch-input-source]="['<Super>Space']"
-    # [switch-input-source-backward]="[]"
-    # [switch-panels]="[]"
-    # [switch-panels-backward]="[]"
-    [switch-to-workspace-1]="['<Super>1']"
-    # [switch-to-workspace-10]="[]"
-    # [switch-to-workspace-11]="[]"
-    # [switch-to-workspace-12]="[]"
-    [switch-to-workspace-2]="['<Super>2']"
-    [switch-to-workspace-3]="['<Super>3']"
-    [switch-to-workspace-4]="['<Super>4']"
-    # [switch-to-workspace-5]="[]"
-    # [switch-to-workspace-6]="[]"
-    # [switch-to-workspace-7]="[]"
-    # [switch-to-workspace-8]="[]"
-    # [switch-to-workspace-9]="[]"
-    # [switch-to-workspace-down]="[]"
-    # [switch-to-workspace-last]="[]"
-    [switch-to-workspace-left]="['<Super>Comma']"
-    [switch-to-workspace-right]="['<Super>Period']"
-    # [switch-to-workspace-up]="[]"
-    [switch-windows]="['<Super>Tab']"
-    # [switch-windows-backward]="[]"
-    # [toggle-above]="[]"
-    [toggle-fullscreen]="['<Super>f']"
-    [toggle-maximized]="['<Super>m']"
-    # [toggle-on-all-workspaces]="[]"
-    # [unmaximize]="[]"
-  )
-
-  for key in ${!wm_keybindings[@]}; do
-    gsettings set ${schema} ${key} "${wm_keybindings[${key}]}"
-  done
-}
-
-_set_shell_keybindings() {
-
-  local schema='org.gnome.shell.keybindings'
-
-  declare -A shell_keybindings
-
-  ### Uncomment and set as you wish.
-  shell_keybindings=(
-    # [focus-active-notification]="[]"
-    # [open-new-window-application-1]="[]"
-    # [open-new-window-application-2]="[]"
-    # [open-new-window-application-3]="[]"
-    # [open-new-window-application-4]="[]"
-    # [open-new-window-application-5]="[]"
-    # [open-new-window-application-6]="[]"
-    # [open-new-window-application-7]="[]"
-    # [open-new-window-application-8]="[]"
-    # [open-new-window-application-9]="[]"
-    # [screenshot]="[]"
-    # [screenshot-window]="[]"
-    [shift-overview-down]="['<Super><Ctrl>n']"
-    [shift-overview-up]="['<Super><Ctrl>p']"
-    [show-screen-recording-ui]="['<Super><Ctrl>r']"
-    [show-screenshot-ui]="['<Super><Ctrl>s']"
-    # [switch-to-application-1]="[]"
-    # [switch-to-application-2]="[]"
-    # [switch-to-application-3]="[]"
-    # [switch-to-application-4]="[]"
-    # [switch-to-application-5]="[]"
-    # [switch-to-application-6]="[]"
-    # [switch-to-application-7]="[]"
-    # [switch-to-application-8]="[]"
-    # [switch-to-application-9]="[]"
-    [toggle-application-view]="['<Super>a']"
-    # [toggle-message-tray]="[]"
-    [toggle-overview]="['<Super>o']"
-    # [toggle-quick-settings]="[]"
-  )
-
-  for key in ${!shell_keybindings[@]}; do
-    gsettings set ${schema} ${key} "${shell_keybindings[${key}]}"
-  done
-}
-
-_disable_ibus_emoji() {
-
-  # Disable ibus emoji/unicode to avoid conflicts.
-  # NOTE: set ibus emoji/unicode to a different key (it may be useful!).
-  gsettings set org.freedesktop.ibus.panel.emoji unicode-hotkey "['']"
-  gsettings set org.freedesktop.ibus.panel.emoji hotkey "['']"
-}
-
-set_keybindings() {
-
-  _disable_ibus_emoji
-
-  _set_wm_keybindings
-
-  _set_shell_keybindings
 }
