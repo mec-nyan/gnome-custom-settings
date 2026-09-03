@@ -4,7 +4,7 @@
 
 schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
 
-_print_pwm_schemas() (
+_print_paperwm_keybindings() (
   export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
 
   local schema='org.gnome.shell.extensions.paperwm.keybindings'
@@ -18,4 +18,29 @@ _print_pwm_schemas() (
     local keybinding="$(gsettings get ${schema} ${key})"
     printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
   done
+)
+
+_delete_paperwm_keybindings() (
+  export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
+
+  local schema='org.gnome.shell.extensions.paperwm.keybindings'
+
+  local keys=($(gsettings list-keys "${schema}"))
+
+  local key_count=0
+  local modified=0
+
+  for key in "${keys[@]}"; do
+    ((key_count++))
+    local kind="$(gsettings range ${schema} ${key})"
+    if [[ "${kind}" == *array* || "${kind}" == *as* ]]; then
+      ((modified++))
+      gsettings set "${schema}" "${key}" "[]"
+      printf "Key \x1b[34m%s\x1b[0m disabled.\n" "${key}"
+    else
+      printf "\x1b[31mnoop\n\x1b[0m"
+    fi
+  done
+
+  printf "Done! %d of %d keybindings disabled.\n" "${modified}" "${key_count}"
 )
