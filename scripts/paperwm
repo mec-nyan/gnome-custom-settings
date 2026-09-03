@@ -12,4 +12,10 @@ _print_pwm_schemas() (
   local keys=($(gsettings list-keys "${schema}"))
 
   printf "== Schema: %s (%d key mappings)\n" "${schema}" "${#keys[@]}"
+
+  for key in "${keys[@]}"; do
+    local kind="$(gsettings range ${schema} ${key})"
+    local keybinding="$(gsettings get ${schema} ${key})"
+    printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
+  done
 )
