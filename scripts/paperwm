@@ -5,6 +5,8 @@
 # Show current keybindings.
 # Use a subshell to avoid messing with GSETTINGS_SCHEMA_DIR (if set by the user).
 _print_paperwm_keybindings() (
+  local pretty=${1}
+
   # We need to set the schemas' directory to modify PaperWM settings.
   local schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
 
@@ -19,7 +21,16 @@ _print_paperwm_keybindings() (
   for key in "${keys[@]}"; do
     local kind="$(gsettings range ${schema} ${key})"
     local keybinding="$(gsettings get ${schema} ${key})"
-    printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
+    if [[ "${pretty}" == "-p" ]]; then
+      # Show with colours (to the terminal)
+      printf "    \x1b[35m(%8s)] \x1b[0m%s: \x1b[32m%s\x1b[0m\n" "${kind}" "${key}" "${keybinding}"
+    elif [[ "${pretty}" == "-f" ]]; then
+      # for printing to file
+      printf "[\"%s\"]=\"%s\"\n" "${key}" "${keybinding}"
+    else
+      # default
+      printf "[%s] [%s] [%s]\n" "${kind}" "${key}" "${keybinding}"
+    fi
   done
 )
 
@@ -51,4 +62,121 @@ _delete_paperwm_keybindings() (
   done
 
   printf "Done! %d of %d keybindings disabled.\n" "${modified}" "${key_count}"
+)
+
+_set_paperwm_keybindings() (
+  local schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
+
+  export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
+
+  local schema='org.gnome.shell.extensions.paperwm.keybindings'
+
+  declare -A paperwm_keybindings
+
+  paperwm_keybindings=(
+    ["activate-window-under-cursor"]="[]"
+    ["barf-out"]="['']"
+    ["barf-out-active"]="['']"
+    ["center"]="[]"
+    ["center-horizontally"]="['<Super>c']"
+    ["center-vertically"]="['<Super>v']"
+    ["close-window"]="['']"
+    ["cycle-height"]="['<Super><Shift>r']"
+    ["cycle-height-backwards"]="['']"
+    ["cycle-width"]="['<Super>r']"
+    ["cycle-width-backwards"]="['']"
+    ["drift-left"]="['<Control><Super>bracketleft']"
+    ["drift-right"]="['<Control><Super>bracketright']"
+    ["live-alt-tab"]="['<Alt>Tab']"
+    ["live-alt-tab-backward"]="['']"
+    ["live-alt-tab-scratch"]="['']"
+    ["live-alt-tab-scratch-backward"]="['']"
+    ["move-down"]="['<Control><Super>j']"
+    ["move-down-workspace"]="['']"
+    ["move-left"]="['<Control><Super>h']"
+    ["move-monitor-above"]="['']"
+    ["move-monitor-below"]="['']"
+    ["move-monitor-left"]="['']"
+    ["move-monitor-right"]="['']"
+    ["move-previous-workspace"]="['']"
+    ["move-previous-workspace-backward"]="['']"
+    ["move-right"]="['<Control><Super>l']"
+    ["move-space-monitor-above"]="['']"
+    ["move-space-monitor-below"]="['']"
+    ["move-space-monitor-left"]="['']"
+    ["move-space-monitor-right"]="['']"
+    ["move-up"]="['<Control><Super>k']"
+    ["move-up-workspace"]="['']"
+    ["new-window"]="['']"
+    ["open-window-position-down"]="[]"
+    ["open-window-position-end"]="[]"
+    ["open-window-position-left"]="[]"
+    ["open-window-position-right"]="[]"
+    ["open-window-position-start"]="[]"
+    ["open-window-position-up"]="[]"
+    ["paper-toggle-fullscreen"]="['']"
+    ["previous-workspace"]="['']"
+    ["previous-workspace-backward"]="['']"
+    ["resize-h-dec"]="['<Super><Shift>minus']"
+    ["resize-h-inc"]="['<Super><Shift>plus']"
+    ["resize-w-dec"]="['<Super>minus']"
+    ["resize-w-inc"]="['<Super>plus']"
+    ["slurp-in"]="['']"
+    ["swap-monitor-above"]="['']"
+    ["swap-monitor-below"]="['']"
+    ["swap-monitor-left"]="['']"
+    ["swap-monitor-right"]="['']"
+    ["switch-down"]="['<Super>j']"
+    ["switch-down-loop"]="['']"
+    ["switch-down-or-else-workspace"]="[]"
+    ["switch-down-workspace"]="['']"
+    ["switch-down-workspace-from-all-monitors"]="[]"
+    ["switch-eighth"]="[]"
+    ["switch-eleventh"]="[]"
+    ["switch-fifth"]="[]"
+    ["switch-first"]="['']"
+    ["switch-focus-mode"]="['<Super><Shift>c']"
+    ["switch-fourth"]="[]"
+    ["switch-global-down"]="[]"
+    ["switch-global-left"]="[]"
+    ["switch-global-right"]="[]"
+    ["switch-global-up"]="[]"
+    ["switch-last"]="['']"
+    ["switch-left"]="['<Super>h']"
+    ["switch-left-loop"]="['']"
+    ["switch-monitor-above"]="['']"
+    ["switch-monitor-below"]="['']"
+    ["switch-monitor-left"]="['']"
+    ["switch-monitor-right"]="['']"
+    ["switch-next"]="['']"
+    ["switch-next-loop"]="[]"
+    ["switch-ninth"]="[]"
+    ["switch-open-window-position"]="['<Super><Shift>w']"
+    ["switch-previous"]="['']"
+    ["switch-previous-loop"]="[]"
+    ["switch-right"]="['<Super>l']"
+    ["switch-right-loop"]="['']"
+    ["switch-second"]="[]"
+    ["switch-seventh"]="[]"
+    ["switch-sixth"]="[]"
+    ["switch-tenth"]="[]"
+    ["switch-third"]="[]"
+    ["switch-up"]="['<Super>k']"
+    ["switch-up-loop"]="['']"
+    ["switch-up-or-else-workspace"]="[]"
+    ["switch-up-workspace"]="['']"
+    ["switch-up-workspace-from-all-monitors"]="[]"
+    ["take-window"]="['']"
+    ["toggle-maximize-width"]="['<Super>f']"
+    ["toggle-position-bar"]="[]"
+    ["toggle-scratch"]="['<Super><Ctrl>Escape']"
+    ["toggle-scratch-layer"]="['<Super><Shift>Escape']"
+    ["toggle-scratch-window"]="['<Super>Escape']"
+    ["toggle-top-and-position-bar"]="['']"
+    ["toggle-top-bar"]="[]"
+  )
+
+  for key in "${!paperwm_keybindings[@]}"; do
+    gsettings set "${schema}" "${key}" "${paperwm_keybindings[${key}]}"
+  done
 )
