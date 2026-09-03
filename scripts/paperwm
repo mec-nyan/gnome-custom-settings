@@ -1,0 +1,15 @@
+# PaperWM settings
+#
+#
+
+schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
+
+_print_pwm_schemas() (
+  export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
+
+  local schema='org.gnome.shell.extensions.paperwm.keybindings'
+
+  local keys=($(gsettings list-keys "${schema}"))
+
+  printf "== Schema: %s (%d key mappings)\n" "${schema}" "${#keys[@]}"
+)
