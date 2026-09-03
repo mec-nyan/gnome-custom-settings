@@ -2,9 +2,12 @@
 #
 #
 
-schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
-
+# Show current keybindings.
+# Use a subshell to avoid messing with GSETTINGS_SCHEMA_DIR (if set by the user).
 _print_paperwm_keybindings() (
+  # We need to set the schemas' directory to modify PaperWM settings.
+  local schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
+
   export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
 
   local schema='org.gnome.shell.extensions.paperwm.keybindings'
@@ -20,7 +23,12 @@ _print_paperwm_keybindings() (
   done
 )
 
+# Clear current keybindings.
+# Use a subshell to avoid messing with GSETTINGS_SCHEMA_DIR (if set by the user).
 _delete_paperwm_keybindings() (
+  # We need to set the schemas' directory to modify PaperWM settings.
+  local schemas_dir="::$HOME/.local/share/gnome-shell/extensions/paperwm@paperwm.github.com/schemas"
+
   export GSETTINGS_SCHEMA_DIR="${schemas_dir}"
 
   local schema='org.gnome.shell.extensions.paperwm.keybindings'
